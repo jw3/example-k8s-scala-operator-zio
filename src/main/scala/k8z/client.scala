@@ -1,10 +1,8 @@
 package k8z
 
-import java.io.{FileInputStream, IOException}
-
 import io.fabric8.kubernetes.client.{ConfigBuilder, DefaultKubernetesClient, KubernetesClient}
-import zio.config.getConfig
 import zio._
+import zio.config.getConfig
 
 object client {
   type ApiConfig = zio.config.ZConfig[config.ApiConfig]
@@ -15,13 +13,14 @@ object client {
       def get(): Task[KubernetesClient]
     }
 
-    def make(): ZLayer[ApiConfig, Throwable, Has[Service]] = (for {
+    def in(ns: String): ZLayer[ApiConfig, Throwable, Has[Service]] = (for {
       cfg <- getConfig[client.config.ApiConfig]
       client = new DefaultKubernetesClient(
         new ConfigBuilder()
           .withMasterUrl(cfg.toUrl)
           .withOauthToken(cfg.token)
           .withTrustCerts(true) // todo;; move to config
+          .withNamespace(ns)
           .build)
     } yield new Service {
       def get(): Task[KubernetesClient] = Task.succeed(client)

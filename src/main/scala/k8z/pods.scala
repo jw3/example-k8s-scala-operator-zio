@@ -1,9 +1,8 @@
 package k8z
 
-import io.fabric8.kubernetes.api.model.{Pod, ReplicationController}
-import io.fabric8.kubernetes.client.{Watcher, WatcherException}
+import io.fabric8.kubernetes.api.model.Pod
 import k8z.client.Client
-import zio.{Has, RIO, Task, URIO, ZIO, ZLayer}
+import zio._
 
 import scala.jdk.CollectionConverters._
 
@@ -19,8 +18,8 @@ object pods {
       def delete(pod: Pod*): Task[Boolean]
     }
 
-    def in(ns: String): ZLayer[Client, Throwable, Has[Service]] = (for {
-      pods <- Client.impl.map(_.pods().inNamespace(ns))
+    def live(): ZLayer[Client, Throwable, Has[Service]] = (for {
+      pods <- Client.impl.map(_.pods)
     } yield new Service {
 
 //      pods.withName("bar").watch(new Watcher[Pod] {
