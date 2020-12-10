@@ -18,33 +18,21 @@ object pods {
       def delete(pod: Pod*): Task[Boolean]
     }
 
-    def live(): ZLayer[Client, Throwable, Has[Service]] = (for {
-      pods <- Client.impl.map(_.pods)
-    } yield new Service {
-
-//      pods.withName("bar").watch(new Watcher[Pod] {
-//        def eventReceived(action: Watcher.Action, resource: Pod): Unit = action match {
-//          case Watcher.Action.ADDED =>
-//          case Watcher.Action.MODIFIED =>
-//          case Watcher.Action.DELETED =>
-//          case Watcher.Action.ERROR =>
-//        }
-//
-//        def onClose(cause: WatcherException): Unit = ???
-//      })
-
-      def get(): Task[List[Pod]] = Task.succeed(pods.list.getItems.asScala.toList)
-      def get(name: String): Task[Option[Pod]] = Task.succeed(Option(pods.withName(name).fromServer.get))
-      def create(pod: Pod*): Task[Pod] = Task.succeed(pods.create(pod: _*))
-      def apply(pod: Pod*): Task[Pod] = Task.succeed(pods.createOrReplace(pod: _*))
-      def delete(pod: Pod*): Task[Boolean] = Task.succeed(pods.delete(pod: _*))
-    }).toLayer
+    def live(): ZLayer[Client, Throwable, Has[Service]] =
+      (for {
+        pods <- Client.impl.map(_.pods)
+      } yield new Service {
+        def get(): Task[List[Pod]] = Task.succeed(pods.list.getItems.asScala.toList)
+        def get(name: String): Task[Option[Pod]] = Task.succeed(Option(pods.withName(name).fromServer.get))
+        def create(pod: Pod*): Task[Pod] = Task.succeed(pods.create(pod: _*))
+        def apply(pod: Pod*): Task[Pod] = Task.succeed(pods.createOrReplace(pod: _*))
+        def delete(pod: Pod*): Task[Boolean] = Task.succeed(pods.delete(pod: _*))
+      }).toLayer
 
     def get(): RIO[Pods with Client, List[Pod]] = ZIO.accessM(_.get.get())
     def get(name: String): RIO[Pods with Client, Option[Pod]] = ZIO.accessM(_.get.get(name))
     def create(pod: Pod*): RIO[Pods with Client, Pod] = ZIO.accessM(_.get.create(pod: _*))
     def apply(pod: Pod*): RIO[Pods with Client, Pod] = ZIO.accessM(_.get.apply(pod: _*))
     def delete(pod: Pod*): RIO[Pods with Client, Boolean] = ZIO.accessM(_.get.delete(pod: _*))
-
   }
 }
